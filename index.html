@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retargeting Interface</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        .container {
+            display: grid;
+            grid-template-rows: auto auto auto;
+            gap: 10px;
+            padding: 10px;
+        }
+        .top-bar, .status-grid, .bottom-bar {
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+        }
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 5px;
+        }
+        .status-grid .header, .status-grid .cell {
+            border: 1px solid #ccc;
+            padding: 5px;
+            text-align: center;
+        }
+        .status-grid .header {
+            font-weight: bold;
+        }
+        .bottom-bar {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 10px;
+        }
+        .bottom-bar .chat-box, .bottom-bar .target-info, .bottom-bar .retargeting-info {
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+        .chat-box {
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-box textarea {
+            flex: 1;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="top-bar">
+            <div>Strike: Practice 2</div>
+            <div>UTC: 0702:232</div>
+        </div>
+        <div class="status-grid">
+            <div class="header">Scud Battery</div>
+            <div class="header">Factory</div>
+            <div class="header">Bridge</div>
+            <div class="header">Comm. Complex</div>
+            <div class="header">Power</div>
+            <div class="header">Runway</div>
+            <div class="header">Command Center</div>
+            <div class="header">Fuel Depot</div>
+            <div class="header">Electric Grid</div>
+            <div class="header">Training Camp</div>
+
+            <!-- Example data cells -->
+            <div class="cell" onclick="selectTarget('RM001-DM', 'Scud Battery', '-2:10 (0792)')">-2:10 (0792)</div>
+            <div class="cell" onclick="selectTarget('RM002-DM', 'Factory', '---')">---</div>
+            <div class="cell" onclick="selectTarget('RM003-DM', 'Bridge', '11:35 (0792)')">11:35 (0792)</div>
+            <div class="cell" onclick="selectTarget('RM004-DM', 'Comm. Complex', '4:27 (0792)')">4:27 (0792)</div>
+            <div class="cell" onclick="selectTarget('RM005-DM', 'Power', '7:56 (0792)')">7:56 (0792)</div>
+            <div class="cell" onclick="selectTarget('RM006-DM', 'Runway', '5:37:7 (0792)')">5:37:7 (0792)</div>
+            <div class="cell" onclick="selectTarget('RM007-DM', 'Command Center', '8:29 (0792)')">8:29 (0792)</div>
+            <div class="cell" onclick="selectTarget('RM008-DM', 'Fuel Depot', '7:04 (0792)')">7:04 (0792)</div>
+            <div class="cell" onclick="selectTarget('RM009-DM', 'Electric Grid', '26:27 (0792)')">26:27 (0792)</div>
+            <div class="cell" onclick="selectTarget('RM010-DM', 'Training Camp', '12:37 (0792)')">12:37 (0792)</div>
+            <div class="cell" onclick="selectTarget('RM011-DM', 'Scud Battery', '6:45 (0792)')">6:45 (0792)</div>
+        </div>
+        <div class="bottom-bar">
+            <div class="chat-box">
+                <textarea readonly id="chat-messages">0702:12 - Spruance -> Missile FM04-DP impacted target.\n0702:15 - Spruance -> Possible new navigation system reported. Missile still targeting Top RM, but accuracy is degraded.\n0702:18 - Blue Ridge -> WestSec has the TOR for the last missile working TODAYPM01.\nBlue Ridge -> Intelligence reports a possible emergent target in the Central Sector in the next 5 minutes.\nBlue Ridge -> EMERGENT TARGET IN WEST SECTOR.</textarea>
+                <input type="text" id="chat-input" placeholder="Type a message...">
+                <button onclick="sendMessage()">Send</button>
+            </div>
+            <div class="target-info" id="target-info">
+                <h3>Target Information</h3>
+                <p>Type: None selected</p>
+                <p>Location: None selected</p>
+                <p>Status: None selected</p>
+            </div>
+            <div class="retargeting-info" id="retargeting-info">
+                <h3>Missile Information</h3>
+                <p>Name: None selected</p>
+                <p>Lat: None selected</p>
+                <p>Long: None selected</p>
+                <p>Elevation: None selected</p>
+                <p>Altitude: 462 MSL</p>
+                <p>Current Target: None</p>
+                <p>Time: <span id="missile-timer">None</span></p>
+                <button onclick="retargetMissile()">Retarget Missile</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let timerInterval;
+
+        function selectTarget(target, location, status) {
+            const targetInfo = document.getElementById('target-info');
+            const retargetingInfo = document.getElementById('retargeting-info');
+
+            targetInfo.innerHTML = `
+                <h3>Target Information</h3>
+                <p>Type: ${target}</p>
+                <p>Location: ${location}</p>
+                <p>Status: ${status}</p>
+            `;
+
+            retargetingInfo.innerHTML = `
+                <h3>Missile Information</h3>
+                <p>Name: ${target}</p>
+                <p>Lat: Selected Latitude</p>
+                <p>Long: Selected Longitude</p>
+                <p>Elevation: Selected Elevation</p>
+                <p>Altitude: 462 MSL</p>
+                <p>Current Target: ${target}</p>
+                <p>Time: <span id="missile-timer">37:00</span></p>
+                <button onclick="retargetMissile()">Retarget Missile</button>
+            `;
+
+            startTimer(37 * 60); // 37 minutes countdown
+        }
+
+        function startTimer(duration) {
+            clearInterval(timerInterval);
+            const display = document.getElementById('missile-timer');
+            let timer = duration, minutes, seconds;
+
+            timerInterval = setInterval(() => {
+                minutes = parseInt(timer / 60, 10);
+                seconds = parseInt(timer % 60, 10);
+
+                minutes = minutes < 10 ? "0" + minutes : minutes;
+                seconds = seconds < 10 ? "0" + seconds : seconds;
+
+                display.textContent = minutes + ":" + seconds;
+
+                if (--timer < 0) {
+                    timer = 0;
+                    clearInterval(timerInterval);
+                }
+            }, 1000);
+        }
+
+        function sendMessage() {
+            const chatMessages = document.getElementById('chat-messages');
+            const chatInput = document.getElementById('chat-input');
+
+            if (chatInput.value.trim() !== "") {
+                chatMessages.value += `\n${chatInput.value}`;
+                chatInput.value = "";
+            }
+        }
+
+        function retargetMissile() {
+            alert('Missile retargeted!');
+        }
+    </script>
+</body>
+</html>
